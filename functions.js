@@ -186,7 +186,7 @@ const mentionEveryone = async(message, client) => {
 
     console.log("Autor é admin. Prosseguindo com as menções...");
     const botId = client.info.wid._serialized;
-    const participantsToMention = chat.groupMetadata.participants.filter(p => p.id._serialized !== botId);
+    const participantsToMention = chat.participants.filter(p => p.id._serialized !== botId);
 
     if (participantsToMention.length === 0) {
         return message.reply("Não há outros participantes para mencionar.");
@@ -197,21 +197,24 @@ const mentionEveryone = async(message, client) => {
     const customText = message.body.replace('$todos', '').trim();
     const text = customText ? `📢 *Marcando geral!* 📢\n\n${customText}` : '📢 *Marcando geral!* 📢';
 
-    // Divide as menções em blocos de 50 para evitar bloqueios e erros.
+    // Divide as menções em blocos de 100 para evitar bloqueios e erros.
     const chunkSize = 100;
     const totalChunks = Math.ceil(participantsToMention.length / chunkSize);
 
     for (let i = 0; i < participantsToMention.length; i += chunkSize) {
         const chunk = participantsToMention.slice(i, i + chunkSize);
         // Use os IDs serializados diretamente para as menções, pois a API suporta isso e getContactById está falhando.
-        // Use os IDs serializados diretamente para as menções, pois a API suporta isso e a obtenção de contatos está falhando.
         const mentions = chunk.map(p => p.id._serialized);
         const currentChunkNumber = Math.floor(i / chunkSize) + 1;
 
         // Na primeira mensagem, enviamos o texto principal. Nas seguintes, apenas as menções.
         const messageText = (i === 0) ? text : `Marcação ${currentChunkNumber}/${totalChunks}`;
         console.log(`Enviando bloco ${currentChunkNumber}/${totalChunks} com ${chunk.length} menções...`);
-        await chat.sendMessage(messageText, { mentions });
+        try {
+            await client.sendMessage(chat.id._serialized, messageText, { mentions });
+        } catch (error) {
+            console.error(`Erro ao enviar menções (Bloco ${currentChunkNumber}):`, error);
+        }
         // Adiciona um pequeno atraso entre as mensagens para parecer mais natural.
         if (i + chunkSize < participantsToMention.length) {
             await new Promise(resolve => setTimeout(resolve, 1000));
