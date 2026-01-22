@@ -211,9 +211,13 @@ const mentionEveryone = async(message, client) => {
         const messageText = (i === 0) ? text : `Marcação ${currentChunkNumber}/${totalChunks}`;
         console.log(`Enviando bloco ${currentChunkNumber}/${totalChunks} com ${chunk.length} menções...`);
         try {
-            await client.sendMessage(chat.id._serialized, messageText, { mentions });
+            await chat.sendMessage(messageText, { mentions });
         } catch (error) {
             console.error(`Erro ao enviar menções (Bloco ${currentChunkNumber}):`, error);
+            // Fallback: Se der erro nas menções (bug da lib), tenta enviar apenas o texto para não falhar totalmente.
+            try {
+                await chat.sendMessage(messageText + "\n\n(Erro ao marcar membros, verifique o console)");
+            } catch (e) {}
         }
         // Adiciona um pequeno atraso entre as mensagens para parecer mais natural.
         if (i + chunkSize < participantsToMention.length) {
