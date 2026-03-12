@@ -6,12 +6,14 @@ const { mentionEveryone, helpMe, sorteiaUm, sorteiaTodos, createSticker, toggleG
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        // Usa o navegador do sistema (se a variável de ambiente existir)
-        executablePath: process.env.CHROME_BIN || undefined,
-        // Essencial para o Chromium rodar dentro do isolamento do Docker
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        // As flags que permitem o root e ajustam o uso de memória
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage'
+        ]
     }
-})
+});
 
 client.on('qr', (qr)=>{
     console.log("Gerando QR code ")
